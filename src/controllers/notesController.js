@@ -1,0 +1,59 @@
+// src/controllers/notesController.js
+
+import { Note } from '../models/note.js';
+import createHttpError from 'http-errors';
+
+// створити нову нотатку
+  export const createNote = async (req, res) => {
+  const note = await Note.create(req.body);
+  res.status(201).json(note);
+};
+// видалити нотатку
+export const deleteNote = async (req, res) => {
+  const { noteId } = req.params;
+  const note = await Note.findOneAndDelete({
+    _id: noteId,
+  });
+
+  if (!note) {
+    throw createHttpError(404, "Note not found");
+  }
+
+  res.status(204).send();
+};
+
+// Оновити нотатку
+export const updateNote = async (req, res) => {
+  const { noteId } = req.params;
+
+  const note = await Note.findOneAndUpdate(
+    { _id: noteId }, // Шукаємо по id
+    req.body,
+    { returnDocument: "after" }, // повертаємо оновлений документ
+  );
+
+  if (!note) {
+	throw createHttpError(404, 'Note not found');
+  }
+
+  res.status(200).json(note);
+};
+
+// Отримати список усіх нотаток
+export const getNotes = async (req, res) => {
+  const notes = await Note.find();
+  res.status(200).json(notes);
+};
+
+// Отримати одну нотатку за id
+export const getNoteById = async (req, res) => {
+  const { noteId } = req.params;
+  const note = await Note.findById(noteId);
+
+ if (!note) {
+	throw createHttpError(404, 'Note not found');
+  }
+
+
+  res.status(200).json(note);
+};
