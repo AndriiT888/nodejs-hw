@@ -19,7 +19,7 @@ export const deleteNote = async (req, res) => {
     throw createHttpError(404, "Note not found");
   }
 
-  res.status(204).send();
+  res.status(200).json(note);
 };
 
 // Оновити нотатку
@@ -40,7 +40,7 @@ export const updateNote = async (req, res) => {
 };
 
 // Отримати список усіх нотаток
-export const getNotes = async (req, res) => {
+export const getAllNotes = async (req, res) => {
   const notes = await Note.find();
   res.status(200).json(notes);
 };
