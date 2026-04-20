@@ -38,7 +38,7 @@ export const updateNote = async (req, res) => {
       userId: req.user._id,
     },
     req.body,
-    { new: true }
+    { returnDocument: 'after' }  // ✅ Замінено new: true
   );
 
   if (!note) {
