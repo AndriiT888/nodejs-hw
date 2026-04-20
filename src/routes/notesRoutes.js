@@ -14,7 +14,13 @@ import {
   updateNoteSchema,
 } from '../validations/notesValidation.js';
 
+import { authenticate } from '../middleware/authenticate.js';
+
+
+
 const router = Router();
+
+router.use(authenticate);
 
 // 🔹 GET /notes
 router.get('/', getAllNotesSchema, getAllNotes);

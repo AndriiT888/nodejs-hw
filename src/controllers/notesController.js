@@ -4,19 +4,25 @@ import { Note } from '../models/note.js';
 import createHttpError from 'http-errors';
 
 // створити нову нотатку
-  export const createNote = async (req, res) => {
-  const note = await Note.create(req.body);
+ export const createNote = async (req, res) => {
+  const note = await Note.create({
+    ...req.body,
+    userId: req.user._id, // 🔥 головне
+  });
+
   res.status(201).json(note);
 };
 // видалити нотатку
 export const deleteNote = async (req, res) => {
   const { noteId } = req.params;
+
   const note = await Note.findOneAndDelete({
     _id: noteId,
+    userId: req.user._id,
   });
 
   if (!note) {
-    throw createHttpError(404, "Note not found");
+    throw createHttpError(404, 'Note not found');
   }
 
   res.status(200).json(note);
@@ -27,13 +33,16 @@ export const updateNote = async (req, res) => {
   const { noteId } = req.params;
 
   const note = await Note.findOneAndUpdate(
-    { _id: noteId }, // Шукаємо по id
+    {
+      _id: noteId,
+      userId: req.user._id,
+    },
     req.body,
-    { returnDocument: "after" }, // повертаємо оновлений документ
+    { new: true }
   );
 
   if (!note) {
-	throw createHttpError(404, 'Note not found');
+    throw createHttpError(404, 'Note not found');
   }
 
   res.status(200).json(note);
@@ -41,26 +50,18 @@ export const updateNote = async (req, res) => {
 
 // Отримати список усіх нотаток
 export const getAllNotes = async (req, res) => {
-  const {
-    page = 1,
-    perPage = 10,
-    tag,
-    search,
-  } = req.query;
+  const { page = 1, perPage = 10, tag, search } = req.query;
 
-  const pageNumber = Number(page);
-  const perPageNumber = Number(perPage);
+  const skip = (page - 1) * perPage;
 
-  const skip = (pageNumber - 1) * perPageNumber;
+  const filter = {
+    userId: req.user._id, // 🔥 тільки свої
+  };
 
-  const filter = {};
-
-  // 🔹 Фільтр по тегу
   if (tag) {
     filter.tag = tag;
   }
 
-  // 🔹 Пошук через text index
   if (search && search.trim() !== '') {
     filter.$text = { $search: search };
   }
@@ -68,15 +69,15 @@ export const getAllNotes = async (req, res) => {
   const [totalNotes, notes] = await Promise.all([
     Note.countDocuments(filter),
     Note.find(filter)
-      .skip(skip)
-      .limit(perPageNumber),
+      .skip(Number(skip))
+      .limit(Number(perPage)),
   ]);
 
-  const totalPages = Math.ceil(totalNotes / perPageNumber);
+  const totalPages = Math.ceil(totalNotes / perPage);
 
   res.status(200).json({
-    page: pageNumber,
-    perPage: perPageNumber,
+    page: Number(page),
+    perPage: Number(perPage),
     totalNotes,
     totalPages,
     notes,
@@ -86,12 +87,15 @@ export const getAllNotes = async (req, res) => {
 // Отримати одну нотатку за id
 export const getNoteById = async (req, res) => {
   const { noteId } = req.params;
-  const note = await Note.findById(noteId);
 
- if (!note) {
-	throw createHttpError(404, 'Note not found');
+  const note = await Note.findOne({
+    _id: noteId,
+    userId: req.user._id,
+  });
+
+  if (!note) {
+    throw createHttpError(404, 'Note not found');
   }
-
 
   res.status(200).json(note);
 };
