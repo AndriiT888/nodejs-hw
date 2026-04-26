@@ -154,10 +154,11 @@ export const requestResetEmail = async (req, res) => {
 
   try {
     await sendEmail({
-      to: user.email,
-      subject: 'Reset your password',
-      html,
-    });
+  from: process.env.SMTP_FROM,
+  to: user.email,
+  subject: 'Reset your password',
+  html,
+});
   } catch (error) {
   console.error('SEND EMAIL ERROR DETAILS:', {
     message: error.message,
